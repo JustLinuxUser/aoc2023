@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -189,11 +190,11 @@ public class Solution {
                     .map(s -> Long.valueOf(s))
                     .collect(Collectors.toList());
 
-            List<List<Long>> seed_ranges = new ArrayList<>();
+            List<long[]> seed_ranges = new ArrayList<>();
             for (int i = 0; i < seeds_seq.size(); i += 2) {
-                List<Long> l = new ArrayList<>();
-                l.add(seeds_seq.get(i));
-                l.add(seeds_seq.get(i + 1));
+                long[] l = new long[2];
+                l[0] = seeds_seq.get(i);
+                l[1] = seeds_seq.get(i + 1) + l[0];
                 seed_ranges.add(l);
             }
 
@@ -219,76 +220,61 @@ public class Solution {
                 r.length = Long.valueOf(nums[2]);
                 Maps.get(idx_map).add(r);
             }
-            /*
-             * for (List<range> map : Maps) {
-             * System.out.println("\nMap: ");
-             * for (range r : map) {
-             * System.out.println(r.dest_start + " " + r.source_start + " " + r.length);
-             * }
-             * }
-             */
-            long min = -1;
-            List<Long> seeds = new ArrayList<>();
-            for (List<Long> seed_range : seed_ranges) {
-                long range_start = seed_range.get(0);
-                long range_len = seed_range.get(1);
-                System.out.println("starting new range, len: " + range_len);
-                Instant t = Instant.now();
-                long frame = 50000;
-                for (int j = 0; j <= range_len / frame; j++) {
-                    long i = 0;
-                    for (; i < frame && j * frame + i < range_len; i++) {
-                        seeds.add(i + j * frame + range_start);
+            for (List<range> map : Maps) {
+                List<long[]> NEW = new ArrayList<>();
+                int processed = 0;
+                while (processed < seed_ranges.size()) {
+                    long[] seed_range = seed_ranges.get(processed);
+                    long ss = seed_range[0];
+                    long se = seed_range[1];
+                    System.out.println("Seed[" + processed + "]: " + ss + " " + se);
+                    for (long[] seed : seed_ranges) {
+                        System.out.println("seed_rangeel: " + seed[0] + " " + (seed[0] + seed[1]));
                     }
-                    for (List<range> map : Maps) {
-                        for (range r : map) {
-                            for (int seed_idx = 0; seed_idx < i; seed_idx++) {
-                                long curr = seeds.get(seed_idx);
-                                if (curr >= r.source_start && curr <= r.source_start + r.length) {
-                                    seeds.set(seed_idx, curr - r.source_start + r.dest_start);
-                                    break;
-                                }
+                    boolean found = false;
+                    for (range map_range : map) {
+                        long ms = map_range.source_start;
+                        long me = map_range.source_start + map_range.length;
+                        long ds = map_range.dest_start - ms;
+                        System.out.println("Map: " + ms + " " + me);
+                        long is = Math.max(ms, ss);
+                        long ie = Math.min(me, se);
+                        if (is < ie) {
+                            NEW.add(new long[] { is + ds, ie + ds });
+                            System.out.println("NEW Adding: " + (is + ds) + " " + (ie + ds));
+                            if (ss < ms) {
+                                seed_ranges.addLast(new long[] { ss, ms });
+                                System.out.println("Adding: " + ss + " " + ms);
                             }
-                        }
-                        for (int seed_idx = 0; seed_idx < i; seed_idx++) {
-                            long curr = seeds.get(seed_idx);
-                            if (curr < min || curr == -1) {
-                                min = curr;
+                            if (se > me) {
+                                seed_ranges.addLast(new long[] { me, se });
+                                System.out.println("Adding: " + me + " " + se);
                             }
-                        }
-                    }
-                }
-                Instant t_2 = Instant.now();
-                System.out.println("took " + Duration.between(t, t_2).toMillis() +
-                        " millis");
-                System.out.println(min);
-            }
-            System.out.println(min);
 
-            /*
-             * System.out.println("Starting new range, len: " + range_len);
-             * Instant t = Instant.now();
-             * for (long i = range_start; i < range_start + range_len; i++) {
-             * // System.out.println("Seed: " + seed);
-             * long curr = i;
-             * for (List<range> map : Maps) {
-             * for (range r : map) {
-             * if (curr >= r.source_start && curr <= r.source_start + r.length) {
-             * curr = curr - r.source_start + r.dest_start;
-             * break;
-             * }
-             * }
-             * // System.out.println("New curr: " + curr);
-             * }
-             * if (curr < min || min == -1) {
-             * min = curr;
-             * }
-             * }
-             * Instant t_2 = Instant.now();
-             * System.out.println("Took " + Duration.between(t, t_2).toMillis() +
-             * " millis");
-             * System.out.println(min);
-             */
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        NEW.add(new long[] { ss, se });
+                        System.out.println("NEW Adding: " + (ss) + " " + (se));
+                    }
+                    processed++;
+                    System.out.println("Len: " + seed_ranges.size());
+                }
+                for (long[] range : NEW) {
+                    System.out.println("NEW ARR: " + range);
+                }
+                seed_ranges.clear();
+                seed_ranges.addAll(NEW);
+                NEW.clear();
+                System.out.println("NEW MAP!!\n\n");
+            }
+            Collections.sort(seed_ranges, (o1, o2) -> o1[0] > o2[0] ? 1 : o1[0] == o2[0] ? 0 : -1);
+            for (long[] range : seed_ranges) {
+                System.out.println("seeds final: " + range[0]);
+            }
+
             myScanner.close();
         } catch (
 
@@ -299,6 +285,6 @@ public class Solution {
     }
 
     public static void main(String[] args) {
-        solution2();
+        solution2_no_lento();
     }
 }
