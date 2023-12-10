@@ -16,10 +16,11 @@ import java.time.Instant;
 /**
  * Solution
  */
-public class Solution {
+public class Solution2 {
 
     static class Deal {
         int[] cards = new int[13];
+        int[] cards_unsorted = new int[13];
     }
 
     static class DealAndBid implements Comparable<DealAndBid> {
@@ -33,6 +34,7 @@ public class Solution {
     }
 
     static int CardValue(char c) {
+        // A, K, Q, T, 9, 8, 7, 6, 5, 4, 3, 2, J
         switch (c) {
             case 'A': {
                 return 0;
@@ -44,30 +46,34 @@ public class Solution {
                 return 2;
             }
             case 'J': {
-                return 3;
+                return 12;
             }
             case 'T': {
-                return 4;
+                return 3;
             }
             default: {
-                int idx = '9' - c + 5;
+                int idx = '9' - c + 4;
                 return idx;
             }
         }
     }
 
     static int DeckType(Deal d1) {
-        if (d1.cards[0] == 5)
+        for (int i : d1.cards_unsorted)
+            System.out.print(i + ", ");
+        System.out.println();
+        if (d1.cards[0] + d1.cards_unsorted[12] == 5)
             return 7;
-        else if (d1.cards[0] == 4)
+        else if (d1.cards[0] + d1.cards_unsorted[12] == 4)
             return 6;
-        else if (d1.cards[0] == 3 && d1.cards[1] == 2)
+        else if (d1.cards[0] + d1.cards_unsorted[12] == 3 && d1.cards[1] == 2)
             return 5;
-        else if (d1.cards[0] == 3)
+        else if (d1.cards[0] + d1.cards_unsorted[12] == 3)
             return 4;
+        // 1, 1
         else if (d1.cards[0] == 2 && d1.cards[1] == 2)
             return 3;
-        else if (d1.cards[0] == 2)
+        else if (d1.cards[0] + d1.cards_unsorted[12] == 2)
             return 2;
         else
             return 1;
@@ -78,6 +84,8 @@ public class Solution {
         for (char c : d) {
             deal.cards[CardValue(c)]++;
         }
+        deal.cards_unsorted = deal.cards.clone();
+        deal.cards[12] = 0;
         Arrays.sort(deal.cards);
         for (int i = 0; i < deal.cards.length / 2; i++) {
             int tmp = deal.cards[i];
@@ -88,14 +96,24 @@ public class Solution {
     }
 
     static int DeckCmp(char[] d1, char[] d2) {
+        System.out.println(String.valueOf(d1) + " " + String.valueOf(d2));
         Deal deal1 = DeckToDeal(d1);
         Deal deal2 = DeckToDeal(d2);
         if (DeckType(deal1) != DeckType(deal2)) {
-            return DeckType(deal1) - DeckType(deal2);
+            int ret = DeckType(deal1) - DeckType(deal2);
+            System.out.println(ret);
+            return ret;
         }
         for (int i = 0; i < d1.length; i++) {
             if (CardValue(d1[i]) != CardValue(d2[i])) // because it works in reverse
-                return CardValue(d2[i]) - CardValue(d1[i]);
+            {
+
+                int ret = CardValue(d2[i]) - CardValue(d1[i]);
+
+                System.out.println("Return based on shit");
+                System.out.println(ret);
+                return ret;
+            }
         }
         return 0;
     }
@@ -120,7 +138,7 @@ public class Solution {
             for (int i = 0; i < L.size(); i++) {
                 DealAndBid dab = L.get(i);
                 sum += dab.bid * (i + 1);
-                // System.out.println(dab.cards + " " + dab.bid + " * " + i + 1);
+                System.out.println(String.valueOf(dab.cards) + " " + dab.bid + " * " + (i + 1));
             }
             System.out.println(sum);
             myScanner.close();
@@ -135,5 +153,7 @@ public class Solution {
 
     public static void main(String[] args) {
         solution1();
+        System.out.println(249810039 + " is too low btw");
+        System.out.println(251757846 + " is too high btw");
     }
 }
