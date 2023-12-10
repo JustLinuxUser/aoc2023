@@ -28,7 +28,7 @@
         <mkdir dir="${build}/jar"/>
         <jar destfile="${build}/artifact.jar" basedir="${build}/classes">
             <manifest>
-                <attribute name="Main-Class" value="solutions.Solution2"/>
+                <attribute name="Main-Class" value="solutions.Solution"/>
             </manifest>
             <zipgroupfileset dir="lib" includes="**/*.jar"/>
         </jar>
