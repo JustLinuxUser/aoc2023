@@ -1,0 +1,21 @@
+use std::collections::{HashMap, HashSet};
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+struct Node {
+    x: usize,
+    y: usize,
+    left_straigh: u16,
+}
+
+impl Node {
+    fn get_neighbours(&self, field: Vec<&str>) -> &[Node] {
+        let ret = &[4];
+    }
+}
+
+fn main() {
+    let s = include_str!("../input");
+    println!("{}", s);
+    let _seen = HashSet::<Node>::new();
+    let _field = s.lines().collect::<Vec<_>>();
+}
