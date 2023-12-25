@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
-import solutions.Solution.cell.type;
-
 /**
  * Solution
  */
@@ -18,48 +16,26 @@ public class Solution {
     static Hashtable<String, Long> ht = new Hashtable<>();
 
     class cell {
-        public enum type {
-            MIRROR_RIGHT,
-            MIRROR_LEFT,
-            SPLITTER_VERT,
-            SPLITTER_HOR,
-            NORMAL
+
+        char t;
+
+        int tracks[] = new int[] { 0, 0, 0, 0 };
+
+        cell(char t) {
+            this.t = t;
         }
+    }
 
-        type t;
-
-        boolean lleft = false;
-        boolean lright = false;
-        boolean ldown = false;
-        boolean lup = false;
-
-        int dirx = 0;
-        int diry = 0;
+    class coord {
         int x;
         int y;
-
-        cell(type t, int x, int y) {
-            this.t = t;
-            this.x = x;
-            this.y = y;
-        }
-
-        cell(cell c) {
-            this.t = c.t;
-            this.lleft = c.lleft;
-            this.lright = c.lright;
-            this.lup = c.lup;
-            this.ldown = c.ldown;
-            this.dirx = c.dirx;
-            this.diry = c.diry;
-            this.x = c.x;
-            this.y = c.y;
-        }
+        // left right up down
+        int dirs[] = new int[] { 0, 0, 0, 0 };
     }
 
     public void solution1() {
         try {
-            File inputFile = new File("input");
+            File inputFile = new File("input_real");
             Scanner myScanner = new Scanner(inputFile);
             int total = 0;
             List<List<cell>> field = new ArrayList<>();
@@ -68,124 +44,120 @@ public class Solution {
                 List<cell> row_c = new ArrayList<>();
                 for (int i = 0; i < line.length(); i++) {
                     char c = line.charAt(i);
-                    if (c == '.')
-                        row_c.add(new cell(type.NORMAL, i, field.size()));
-                    else if (c == '/')
-                        row_c.add(new cell(type.MIRROR_RIGHT, i, field.size()));
-                    else if (c == '\\')
-                        row_c.add(new cell(type.MIRROR_LEFT, i, field.size()));
-                    else if (c == '|')
-                        row_c.add(new cell(type.SPLITTER_VERT, i, field.size()));
-                    else if (c == '-')
-                        row_c.add(new cell(type.SPLITTER_HOR, i, field.size()));
-                    else {
-                        System.out.println("FUCK!!! WE DONE GOOFED!!!: " + c);
-                        System.exit(-1);
-                    }
+                    row_c.add(new cell(c));
                 }
                 field.add(row_c);
             }
-            int dirx;
-            int diry;
-            int x = 0;
-            int y = 0;
             int width = field.get(0).size();
             int height = field.size();
-            List<cell> stack = new ArrayList<>();
-            field.get(0).get(0).dirx = 1;
-            field.get(0).get(0).diry = 0;
-            stack.add(field.get(0).get(0));
-            while (stack.size() != 0) {
-                cell el = stack.removeFirst();
-                dirx = el.dirx;
-                diry = el.diry;
-                x = el.x + dirx;
-                y = el.y + diry;
+            List<coord> stack = new ArrayList<>();
+            {
+                coord c = new coord();
+                c.x = -1;
+                c.y = 0;
+                c.dirs[1] = 1;
+                stack.add(c);
+            }
+            big_loop: while (stack.size() != 0) {
+                coord crd = stack.removeFirst();
+
                 while (true) {
-                    if (x < 0 || x >= width || y < 0 || y >= height) {
+                    // left right up down
+                    if (crd.dirs[0] == 1)
+                        crd.x--;
+                    if (crd.dirs[1] == 1)
+                        crd.x++;
+                    if (crd.dirs[2] == 1)
+                        crd.y--;
+                    if (crd.dirs[3] == 1)
+                        crd.y++;
+                    System.out.println("x: " + crd.x + " y: " + crd.y);
+                    if (crd.x < 0 || crd.x >= width || crd.y < 0 || crd.y >= height) {
                         System.out.println("Out of bounds");
                         break;
                     }
-                    el = field.get(y).get(x);
-                    System.out.println("dx: " + dirx + " dy: " + diry);
-                    System.out.println("x: " + x + " y: " + y);
-                    System.out.println("EL: x: " + el.x + " y: " + el.y);
+                    cell el = field.get(crd.y).get(crd.x);
 
-                    if (dirx == 1) {
-                        if (!el.lright)
-                            el.lright = true;
-                        else {
-                            System.out.println("right");
-                            break;
+                    for (int i = 0; i < 4; i++) {
+                        if (crd.dirs[i] == 1) {
+                            if (el.tracks[i] == 0) {
+                                el.tracks[i] = 1;
+                            } else {
+                                continue big_loop;
+                            }
                         }
                     }
-                    if (dirx == -1)
-                        if (!el.lleft)
-                            el.lleft = true;
-                        else {
-                            System.out.println("left");
-                            break;
-                        }
-                    if (diry == 1)
-                        if (!el.ldown)
-                            el.ldown = true;
-                        else {
-                            System.out.println("down");
-                            break;
-                        }
-                    if (diry == -1)
-                        if (!el.lup)
-                            el.lup = true;
-                        else {
-                            System.out.println("Up");
-                            break;
-                        }
 
-                    if (el.t == type.MIRROR_LEFT) {
-                        cell c = new cell(el);
-                        c.dirx = -el.diry;
-                        c.diry = -el.dirx;
-                        stack.add(c);
-                        System.out.println("Mirror _left");
-                        break;
+                    if (el.t == '/') {
+                        if (crd.dirs[0] == 1) {
+                            crd.dirs[0] = 0;
+                            crd.dirs[3] = 1;
+                        } else if (crd.dirs[1] == 1) {
+                            crd.dirs[1] = 0;
+                            crd.dirs[2] = 1;
+                        } else if (crd.dirs[2] == 1) {
+                            crd.dirs[2] = 0;
+                            crd.dirs[1] = 1;
+                        } else if (crd.dirs[3] == 1) {
+                            crd.dirs[3] = 0;
+                            crd.dirs[0] = 1;
+                        }
                     }
-                    if (el.t == type.MIRROR_RIGHT) {
-                        cell c = new cell(el);
-                        c.dirx = el.diry;
-                        c.diry = el.dirx;
-                        stack.add(c);
-                        System.out.println("Mirror _right");
-                        break;
+                    if (el.t == '\\') {
+                        if (crd.dirs[0] == 1) {
+                            crd.dirs[0] = 0;
+                            crd.dirs[2] = 1;
+                        } else if (crd.dirs[1] == 1) {
+                            crd.dirs[1] = 0;
+                            crd.dirs[3] = 1;
+                        } else if (crd.dirs[2] == 1) {
+                            crd.dirs[2] = 0;
+                            crd.dirs[0] = 1;
+                        } else if (crd.dirs[3] == 1) {
+                            crd.dirs[3] = 0;
+                            crd.dirs[1] = 1;
+                        }
                     }
-                    if (el.t == type.SPLITTER_HOR) {
-                        cell c = new cell(el);
-                        c.dirx = 1;
-                        c.diry = 0;
-                        stack.add(c);
-                        c = new cell(el);
-                        c.dirx = -1;
-                        c.diry = 0;
-                        stack.add(c);
-                        System.out.println("hor split");
-                        break;
+                    if (el.t == '-') {
+                        coord new_coord = new coord();
+                        // left right up down
+                        new_coord.dirs[0] = 1;
+                        new_coord.x = crd.x;
+                        new_coord.y = crd.y;
+                        stack.add(new_coord);
+                        for (int i = 0; i < 4; i++) {
+                            crd.dirs[i] = 0;
+                        }
+                        crd.dirs[1] = 1;
                     }
-                    if (el.t == type.SPLITTER_VERT) {
-                        cell c = new cell(el);
-                        c.dirx = 0;
-                        c.diry = 1;
-                        stack.add(c);
-                        c = new cell(el);
-                        c.dirx = 0;
-                        c.diry = -1;
-                        stack.add(c);
-                        System.out.println("vert split");
-                        break;
+                    if (el.t == '|') {
+                        coord new_coord = new coord();
+                        // left right up down
+                        new_coord.dirs[2] = 1;
+                        new_coord.x = crd.x;
+                        new_coord.y = crd.y;
+                        stack.add(new_coord);
+                        for (int i = 0; i < 4; i++) {
+                            crd.dirs[i] = 0;
+                        }
+                        crd.dirs[3] = 1;
                     }
-                    x += dirx;
-                    y += diry;
-                    total++;
-                    System.out.println("Finished loop");
                 }
+            }
+            for (int iter_p = 0; iter_p < field.size(); iter_p++) {
+                for (int jiter_p = 0; jiter_p < field.get(0).size(); jiter_p++) {
+                    cell e = field.get(iter_p).get(jiter_p);
+                    boolean occ = false;
+                    for (int iter = 0; iter < 4; iter++)
+                        if (e.tracks[iter] == 1)
+                            occ = true;
+                    if (occ) {
+                        total++;
+                        System.out.print("#");
+                    } else
+                        System.out.print(".");
+                }
+                System.out.println();
             }
 
             System.out.println(total);
@@ -198,8 +170,204 @@ public class Solution {
         }
     }
 
+    int calc(List<List<cell>> field, coord start) {
+        int width = field.get(0).size();
+        int height = field.size();
+        int total = 0;
+        List<coord> stack = new ArrayList<>();
+        {
+            stack.add(start);
+        }
+        big_loop: while (stack.size() != 0) {
+            coord crd = stack.removeFirst();
+
+            while (true) {
+                // left right up down
+                if (crd.dirs[0] == 1)
+                    crd.x--;
+                if (crd.dirs[1] == 1)
+                    crd.x++;
+                if (crd.dirs[2] == 1)
+                    crd.y--;
+                if (crd.dirs[3] == 1)
+                    crd.y++;
+                if (crd.x < 0 || crd.x >= width || crd.y < 0 || crd.y >= height) {
+                    break;
+                }
+                cell el = field.get(crd.y).get(crd.x);
+
+                for (int i = 0; i < 4; i++) {
+                    if (crd.dirs[i] == 1) {
+                        if (el.tracks[i] == 0) {
+                            el.tracks[i] = 1;
+                        } else {
+                            continue big_loop;
+                        }
+                    }
+                }
+
+                if (el.t == '/') {
+                    if (crd.dirs[0] == 1) {
+                        crd.dirs[0] = 0;
+                        crd.dirs[3] = 1;
+                    } else if (crd.dirs[1] == 1) {
+                        crd.dirs[1] = 0;
+                        crd.dirs[2] = 1;
+                    } else if (crd.dirs[2] == 1) {
+                        crd.dirs[2] = 0;
+                        crd.dirs[1] = 1;
+                    } else if (crd.dirs[3] == 1) {
+                        crd.dirs[3] = 0;
+                        crd.dirs[0] = 1;
+                    }
+                }
+                if (el.t == '\\') {
+                    if (crd.dirs[0] == 1) {
+                        crd.dirs[0] = 0;
+                        crd.dirs[2] = 1;
+                    } else if (crd.dirs[1] == 1) {
+                        crd.dirs[1] = 0;
+                        crd.dirs[3] = 1;
+                    } else if (crd.dirs[2] == 1) {
+                        crd.dirs[2] = 0;
+                        crd.dirs[0] = 1;
+                    } else if (crd.dirs[3] == 1) {
+                        crd.dirs[3] = 0;
+                        crd.dirs[1] = 1;
+                    }
+                }
+                if (el.t == '-') {
+                    coord new_coord = new coord();
+                    // left right up down
+                    new_coord.dirs[0] = 1;
+                    new_coord.x = crd.x;
+                    new_coord.y = crd.y;
+                    stack.add(new_coord);
+                    for (int i = 0; i < 4; i++) {
+                        crd.dirs[i] = 0;
+                    }
+                    crd.dirs[1] = 1;
+                }
+                if (el.t == '|') {
+                    coord new_coord = new coord();
+                    // left right up down
+                    new_coord.dirs[2] = 1;
+                    new_coord.x = crd.x;
+                    new_coord.y = crd.y;
+                    stack.add(new_coord);
+                    for (int i = 0; i < 4; i++) {
+                        crd.dirs[i] = 0;
+                    }
+                    crd.dirs[3] = 1;
+                }
+            }
+        }
+        for (int iter_p = 0; iter_p < field.size(); iter_p++) {
+            for (int jiter_p = 0; jiter_p < field.get(0).size(); jiter_p++) {
+                cell e = field.get(iter_p).get(jiter_p);
+                boolean occ = false;
+                for (int iter = 0; iter < 4; iter++)
+                    if (e.tracks[iter] == 1)
+                        occ = true;
+                if (occ) {
+                    total++;
+                }
+            }
+        }
+        return total;
+    }
+
+    public void solution2() {
+        try {
+            File inputFile = new File("input_real");
+            Scanner myScanner = new Scanner(inputFile);
+            int max = 0;
+            List<List<cell>> field = new ArrayList<>();
+            while (myScanner.hasNextLine()) {
+                String line = myScanner.nextLine();
+                List<cell> row_c = new ArrayList<>();
+                for (int i = 0; i < line.length(); i++) {
+                    char c = line.charAt(i);
+                    row_c.add(new cell(c));
+                }
+                field.add(row_c);
+            }
+            int width = field.get(0).size();
+            int height = field.size();
+            for (int i = 0; i < height; i++) {
+                coord c = new coord();
+                c.dirs[1] = 1;
+                c.x = -1;
+                c.y = i;
+                int curr = calc(field, c);
+                System.out.println(curr);
+                if (curr > max)
+                    max = curr;
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        cell ce = field.get(y).get(x);
+                        ce.tracks = new int[] { 0, 0, 0, 0 };
+                    }
+                }
+            }
+            for (int i = 0; i < height; i++) {
+                coord c = new coord();
+                c.dirs[0] = 1;
+                c.x = width;
+                c.y = i;
+                int curr = calc(field, c);
+                if (curr > max)
+                    max = curr;
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        cell ce = field.get(y).get(x);
+                        ce.tracks = new int[] { 0, 0, 0, 0 };
+                    }
+                }
+            }
+            for (int i = 0; i < width; i++) {
+                coord c = new coord();
+                c.dirs[3] = 1;
+                c.x = i;
+                c.y = -1;
+                int curr = calc(field, c);
+                if (curr > max)
+                    max = curr;
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        cell ce = field.get(y).get(x);
+                        ce.tracks = new int[] { 0, 0, 0, 0 };
+                    }
+                }
+            }
+            for (int i = 0; i < width; i++) {
+                coord c = new coord();
+                c.dirs[2] = 1;
+                c.x = i;
+                c.y = height;
+                int curr = calc(field, c);
+                if (curr > max)
+                    max = curr;
+                for (int y = 0; y < height; y++) {
+                    for (int x = 0; x < width; x++) {
+                        cell ce = field.get(y).get(x);
+                        ce.tracks = new int[] { 0, 0, 0, 0 };
+                    }
+                }
+            }
+            System.out.println(max);
+
+            myScanner.close();
+        } catch (
+
+        FileNotFoundException e) {
+            System.err.println("File not found");
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
-        new Solution().solution1();
+        new Solution().solution2();
     }
 
 }
